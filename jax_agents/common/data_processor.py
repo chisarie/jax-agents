@@ -89,5 +89,5 @@ class DataProcessor:
                                      cum_reward - self.n_steps_deque[0][2],
                                      state)
         if reset_flag:
-            self.n_steps_deque.clear
+            self.n_steps_deque.clear()
         return
