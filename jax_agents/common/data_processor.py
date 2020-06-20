@@ -20,3 +20,24 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+from collections import deque
+
+
+class DataProcessor:
+    """Class to process the data stream of states and actions.
+
+    It calculates the rewards and stores 3 tuples (state, action, reward) in a
+    deque in order to support multistep reinforcement learning
+    (see https://arxiv.org/pdf/1901.07510.pdf).
+
+    :param reward_func: (func) reward_func(state, action) -> reward
+    :param n_steps: (int) how many steps to consider for the multistep setting,
+        use 1 for standard setting
+    """
+
+    def __init__(self, reward_func, n_steps):
+        """Initialize reward function and the multistep deque."""
+        self.reward_func = reward_func
+        self.n_steps_deque = deque(maxlen=n_steps+1)
+        return
