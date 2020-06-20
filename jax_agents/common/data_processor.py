@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""Processing data stream from interactions."""
+"""Process data stream from interactions."""
 
 from collections import deque
 import numpy as np
