@@ -23,6 +23,7 @@
 
 """A simple inverted pendulum environment."""
 
+import random
 import numpy as np
 from jax_agents.common.runge_kutta import runge_kutta
 
@@ -62,14 +63,15 @@ class PendulumEnv():
     States:
         Type: Box(4)
         Num	State                       Min         Max
-        0	Pendulum Angle              0           2 pi
+        0	Pendulum Angle              0(downward) 2 pi
         2	Pendulum Angular Velocity   -Inf        Inf
-
     Actions:
         Type: Box(1)
         Num	Action                      Min         Max
         0	Torque                      -4.0        4.0
-
+    Orientation:
+        angle: pi/2 -> to the right
+        angular velocity: positive -> counterclockwise
     Reward:
         Reward is 1 for every step in the upright position, -0.1 otherwise
     Starting State:
@@ -83,4 +85,24 @@ class PendulumEnv():
         """Integrate the dynamics on step forward."""
         dt = 0.05
         next_state = runge_kutta(pendulum_dynamics, state, action, dt)
+        next_state[0] %= (2*np.pi)  # wrap angle in [0, 2pi]
         return next_state
+
+    def reward_func(self, state, action, next_state):
+        """Return the reward for the given transition."""
+        distance_to_upright = abs(next_state[0] - np.pi)
+        if distance_to_upright < np.deg2rad(10):
+            reward = 1.0
+        else:
+            reward = -0.1
+        return reward
+
+    def reset(self):
+        """Reset the state to start a new episode."""
+        angle = np.pi + random.uniform(-np.deg2rad(10), np.deg2rad(10))
+        angular_velocity = 0.0
+        return [angle, angular_velocity]  # state
+
+    def check_if_done(self, state):
+        """Check if episode needs to restart."""
+        return False
