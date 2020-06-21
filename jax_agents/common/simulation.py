@@ -26,6 +26,28 @@
 import csv
 
 
+def simulate(environment, policy, timesteps, folder):
+    """Simulate one episode."""
+    state = environment.reset()
+    field_names = environment.state_names + environment.action_names
+    field_names += ["reward", "reset_flag"]
+    sim_logger = SimLogger(folder, field_names)
+    for _ in range(timesteps):
+        normed_state = environment.norm_state(state)
+        scaled_action = policy.select_action(normed_state)
+        action = environment.rescale_action(scaled_action)
+        next_state = environment.step(state, action)
+        reward = environment.reward_func(state, action, next_state)
+        reset_flag = environment.check_if_done(next_state)
+        sim_logger.log(state + action + [reward, reset_flag])
+        if reset_flag:
+            state = environment.reset()
+        else:
+            state = next_state
+    sim_logger.close()
+    return
+
+
 class SimLogger():
     """Log data from simulation in a csv file."""
 
@@ -48,25 +70,3 @@ class SimLogger():
         """Close file."""
         self.csv_file.close()
         return
-
-
-def simulate(environment, policy, timesteps, folder):
-    """Simulate one episode."""
-    state = environment.reset()
-    field_names = environment.state_names + environment.action_names
-    field_names += ["reward", "reset_flag"]
-    sim_logger = SimLogger(folder, field_names)
-    for _ in range(timesteps):
-        normed_state = environment.norm_state(state)
-        scaled_action = policy.select_action(normed_state)
-        action = environment.rescale_action(scaled_action)
-        next_state = environment.step(state, action)
-        reward = environment.reward_func(state, action, next_state)
-        reset_flag = environment.check_if_done(next_state)
-        sim_logger.log(state + action + [reward, reset_flag])
-        if reset_flag:
-            state = environment.reset()
-        else:
-            state = next_state
-    sim_logger.close()
-    return
