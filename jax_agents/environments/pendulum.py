@@ -86,6 +86,8 @@ class PendulumEnv():
         self.dt = 0.05          # timesteps length [seconds]
         self.state_dim = 2      # dimension of state vector
         self.action_dim = 1     # dimension of action vector
+        self.state_names = ["theta", "theta_dot"]
+        self.action_names = ["torque"]
         return
 
     def norm_state(self, state):

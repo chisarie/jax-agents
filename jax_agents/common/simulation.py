@@ -24,6 +24,7 @@
 """Simulate a policy in the given environment, optionally render a video."""
 
 import csv
+import os
 import numpy as np
 
 
@@ -35,7 +36,7 @@ def simulate(environment, policy, timesteps, folder):
     sim_logger = SimLogger(folder, field_names)
     for _ in range(timesteps):
         normed_state = environment.norm_state(state)
-        scaled_action = policy.select_action(normed_state)
+        scaled_action = policy(normed_state)
         action = environment.rescale_action(scaled_action)
         next_state = environment.step(state, action)
         reward = environment.reward_func(state, action, next_state)
@@ -55,6 +56,7 @@ class SimLogger():
     def __init__(self, folder, field_names):
         """Initialize csv file."""
         # Create csv
+        os.makedirs(folder)
         self.csv_file = open(folder+"sim.csv", 'w', newline='')
         self.field_names = field_names
         self.writer = csv.DictWriter(self.csv_file, fieldnames=field_names)
