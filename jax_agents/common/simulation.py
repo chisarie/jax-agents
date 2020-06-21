@@ -24,6 +24,7 @@
 """Simulate a policy in the given environment, optionally render a video."""
 
 import csv
+import numpy as np
 
 
 def simulate(environment, policy, timesteps, folder):
@@ -39,7 +40,7 @@ def simulate(environment, policy, timesteps, folder):
         next_state = environment.step(state, action)
         reward = environment.reward_func(state, action, next_state)
         reset_flag = environment.check_if_done(next_state)
-        sim_logger.log(state + action + [reward, reset_flag])
+        sim_logger.log(np.hstack((state, action, reward, reset_flag)))
         if reset_flag:
             state = environment.reset()
         else:

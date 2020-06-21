@@ -81,10 +81,27 @@ class PendulumEnv():
         10 seconds, i.e. 200 steps at 20 Hz
     """
 
+    def __init__(self):
+        """Initialize environment."""
+        self.dt = 0.05          # timesteps length [seconds]
+        self.state_dim = 2      # dimension of state vector
+        self.action_dim = 1     # dimension of action vector
+        return
+
+    def norm_state(self, state):
+        """Norm the state to have zero mean and unit variance."""
+        state_mean = np.array([np.pi, 0.0])
+        state_std = np.array([1.8, 2.0])
+        normed_state = (state - state_mean) / state_std
+        return normed_state
+
+    def rescale_action(self, scaled_action):
+        """Rescale the action from the policy (which are between -1 and 1)."""
+        return scaled_action * 4.0
+
     def step(self, state, action):
         """Integrate the dynamics on step forward."""
-        dt = 0.05
-        next_state = runge_kutta(pendulum_dynamics, state, action, dt)
+        next_state = runge_kutta(pendulum_dynamics, state, action, self.dt)
         next_state[0] %= (2*np.pi)  # wrap angle in [0, 2pi]
         return next_state
 
@@ -101,7 +118,7 @@ class PendulumEnv():
         """Reset the state to start a new episode."""
         angle = np.pi + random.uniform(-np.deg2rad(10), np.deg2rad(10))
         angular_velocity = 0.0
-        return [angle, angular_velocity]  # state
+        return np.array([angle, angular_velocity])  # state
 
     def check_if_done(self, state):
         """Check if episode needs to restart."""
