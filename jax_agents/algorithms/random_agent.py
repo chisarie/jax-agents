@@ -23,9 +23,10 @@
 
 """A random policy useful for debugging environments."""
 
-from numpy import random
+from jax import random
 
 
 def random_policy(_, action_dim):
     """Return a random number for each action."""
-    return random.rand(action_dim) * 2 - 1
+    rng = random.PRNGKey(1996)
+    return random.uniform(rng, shape=(action_dim), minval=-1.0, maxval=1.0)

@@ -24,7 +24,8 @@
 """Process data stream from interactions."""
 
 from collections import deque
-import numpy as np
+import jax.numpy as jnp
+from jax import random
 
 
 class ReplayBuffer():
@@ -32,10 +33,10 @@ class ReplayBuffer():
 
     def __init__(self, buffer_size, state_dim, action_dim):
         """Initialize replay buffer with zeros."""
-        self.states = np.zeros([buffer_size, state_dim], dtype=np.float32)
-        self.actions = np.zeros([buffer_size, action_dim], dtype=np.float32)
-        self.rewards = np.zeros(buffer_size, dtype=np.float32)
-        self.next_states = np.zeros([buffer_size, state_dim], dtype=np.float32)
+        self.states = jnp.zeros((buffer_size, state_dim))
+        self.actions = jnp.zeros((buffer_size, action_dim))
+        self.rewards = jnp.zeros((buffer_size))
+        self.next_states = jnp.zeros((buffer_size, state_dim))
         self.ptr, self.size, self.buffer_size = 0, 0, buffer_size
         return
 
@@ -51,11 +52,14 @@ class ReplayBuffer():
 
     def sample_batch(self, batch_size):
         """Sample past experience."""
-        indexes = np.random.randint(low=0, high=self.size, size=batch_size)
-        return dict(states=self.states[indexes],
-                    actions=self.actions[indexes],
-                    rewards=self.rewards[indexes],
-                    final_states=self.next_states[indexes])
+        rng = random.PRNGKey(1996)
+        indexes = random.randint(rng, shape=(batch_size),
+                                 minval=0, maxval=self.size)
+        data_batch = jnp.array(self.states[indexes],
+                               self.actions[indexes],
+                               self.rewards[indexes],
+                               self.next_states[indexes])
+        return jnp.transpose(data_batch)
 
 
 class DataProcessor:

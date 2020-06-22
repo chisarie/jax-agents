@@ -25,7 +25,7 @@
 
 import csv
 import os
-import numpy as np
+import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
@@ -43,7 +43,7 @@ def simulate(environment, policy, timesteps, folder):
         next_state = environment.step(state, action)
         reward = environment.reward_func(state, action, next_state)
         reset_flag = environment.check_if_done(next_state)
-        sim_logger.log(np.hstack((state, action, reward, reset_flag)))
+        sim_logger.log(jnp.hstack((state, action, reward, reset_flag)))
         if reset_flag:
             state = environment.reset()
         else:

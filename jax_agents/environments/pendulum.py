@@ -24,7 +24,7 @@
 """A simple inverted pendulum environment."""
 
 import random
-import numpy as np
+import jax.numpy as jnp
 import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
 from jax_agents.common.runge_kutta import runge_kutta
@@ -67,8 +67,8 @@ class PendulumEnv():
 
     def norm_state(self, state):
         """Norm the state to have zero mean and unit variance."""
-        state_mean = np.array([np.pi, 0.0])
-        state_std = np.array([1.8, 2.0])
+        state_mean = jnp.array([jnp.pi, 0.0])
+        state_std = jnp.array([1.8, 2.0])
         normed_state = (state - state_mean) / state_std
         return normed_state
 
@@ -80,13 +80,13 @@ class PendulumEnv():
         """Integrate the dynamics on step forward."""
         next_state = runge_kutta(self.pendulum_dynamics, state,
                                  action, self.dt)
-        next_state[0] %= (2*np.pi)  # wrap angle in [0, 2pi]
+        next_state[0] %= (2*jnp.pi)  # wrap angle in [0, 2pi]
         return next_state
 
     def reward_func(self, state, action, next_state):
         """Return the reward for the given transition."""
-        distance_to_upright = abs(next_state[0] - np.pi)
-        if distance_to_upright < np.deg2rad(10):
+        distance_to_upright = abs(next_state[0] - jnp.pi)
+        if distance_to_upright < jnp.deg2rad(10):
             reward = 1.0
         else:
             reward = -0.1
@@ -94,9 +94,9 @@ class PendulumEnv():
 
     def reset(self):
         """Reset the state to start a new episode."""
-        angle = np.pi + random.uniform(-np.deg2rad(10), np.deg2rad(10))
+        angle = jnp.pi + random.uniform(-jnp.deg2rad(10), jnp.deg2rad(10))
         angular_velocity = 0.0
-        return np.array([angle, angular_velocity])  # state
+        return jnp.array([angle, angular_velocity])  # state
 
     def check_if_done(self, state):
         """Check if episode needs to restart."""
@@ -113,9 +113,9 @@ class PendulumEnv():
         theta = state[0]
         theta_dot = state[1]
 
-        x_dot = np.empty(2)
+        x_dot = jnp.empty(2)
         x_dot[0] = theta_dot
-        x_dot[1] = (action - np.sin(theta) * g / self.length
+        x_dot[1] = (action - jnp.sin(theta) * g / self.length
                     - theta_dot * b / (m * self.length**2))
         return x_dot
 
@@ -126,8 +126,8 @@ class PendulumEnv():
         ax.set_ylim(-1.5, 1.5)
         ax.set_aspect("equal")
         angle = float(log[0])
-        x = self.length * np.sin(angle)
-        y = -self.length * np.cos(angle)
+        x = self.length * jnp.sin(angle)
+        y = -self.length * jnp.cos(angle)
         self.line = mlines.Line2D([0.0, x], [0.0, y],
                                   linewidth=2, color="tab:brown")
         self.circle = mpatches.Circle((x, y), radius=0.1, color="black")
@@ -138,8 +138,8 @@ class PendulumEnv():
     def render(self, log):
         """Render the given timestep."""
         angle = float(log[0])
-        x = self.length * np.sin(angle)
-        y = -self.length * np.cos(angle)
+        x = self.length * jnp.sin(angle)
+        y = -self.length * jnp.cos(angle)
         self.line.set_xdata([0.0, x])
         self.line.set_ydata([0.0, y])
         self.circle.center = (x, y)
