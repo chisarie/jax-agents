@@ -26,7 +26,7 @@ import datetime
 import os
 from functools import partial
 
-from jax_agents.common.simulation import simulate
+from jax_agents.common.simulation import simulate, render_csv
 from jax_agents.algorithms.random_agent import random_policy
 from jax_agents.environments import pendulum
 
@@ -40,6 +40,7 @@ def main():
     policy = partial(random_policy, action_dim=environment.action_dim)
     timesteps = 200
     simulate(environment, policy, timesteps, folder)
+    render_csv(environment, folder)
     return
 
 

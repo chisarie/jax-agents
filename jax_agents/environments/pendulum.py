@@ -25,35 +25,9 @@
 
 import random
 import numpy as np
+import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
 from jax_agents.common.runge_kutta import runge_kutta
-
-
-def pendulum_dynamics(state, action):
-    """Environment's dynamics.
-
-    Args:
-        state (vector):
-            state1 : angle (theta)
-            state2 : angular velocity (theta_dot)
-        action (scalar): torque
-    Returns:
-        x_dot (vector): derivative of the state
-    """
-    # Constants:
-    g = 9.8         # acceleration due to gravity, positive downward, [m/sec^2]
-    m = 0.5         # mass at the tip of the pendulum [kg]
-    length = 1.0    # pole length [meters]
-    b = 0.01        # friction coefficient [kg*m^2/s]
-
-    # States
-    theta = state[0]
-    theta_dot = state[1]
-
-    x_dot = np.empty(2)
-    x_dot[0] = theta_dot
-    x_dot[1] = (action - np.sin(theta) * g / length
-                - theta_dot * b / (m * length**2))
-    return x_dot
 
 
 class PendulumEnv():
@@ -83,6 +57,7 @@ class PendulumEnv():
 
     def __init__(self):
         """Initialize environment."""
+        self.length = 1.0       # pole length [meters]
         self.dt = 0.05          # timesteps length [seconds]
         self.state_dim = 2      # dimension of state vector
         self.action_dim = 1     # dimension of action vector
@@ -103,7 +78,8 @@ class PendulumEnv():
 
     def step(self, state, action):
         """Integrate the dynamics on step forward."""
-        next_state = runge_kutta(pendulum_dynamics, state, action, self.dt)
+        next_state = runge_kutta(self.pendulum_dynamics, state,
+                                 action, self.dt)
         next_state[0] %= (2*np.pi)  # wrap angle in [0, 2pi]
         return next_state
 
@@ -125,3 +101,46 @@ class PendulumEnv():
     def check_if_done(self, state):
         """Check if episode needs to restart."""
         return False
+
+    def pendulum_dynamics(self, state, action):
+        """Environment's dynamics. Return the derivative of the state."""
+        # Constants:
+        g = 9.8         # gravity, positive downward, [m/sec^2]
+        m = 0.5         # mass at the tip of the pendulum [kg]
+        b = 0.01        # friction coefficient [kg*m^2/s]
+
+        # States
+        theta = state[0]
+        theta_dot = state[1]
+
+        x_dot = np.empty(2)
+        x_dot[0] = theta_dot
+        x_dot[1] = (action - np.sin(theta) * g / self.length
+                    - theta_dot * b / (m * self.length**2))
+        return x_dot
+
+    def initialize_rendering(self, log, fig):
+        """Initialize Matplotlib axes for rendering."""
+        ax = fig.add_subplot()
+        ax.set_xlim(-1.5, 1.5)
+        ax.set_ylim(-1.5, 1.5)
+        ax.set_aspect("equal")
+        angle = float(log[0])
+        x = self.length * np.sin(angle)
+        y = -self.length * np.cos(angle)
+        self.line = mlines.Line2D([0.0, x], [0.0, y],
+                                  linewidth=2, color="tab:brown")
+        self.circle = mpatches.Circle((x, y), radius=0.1, color="black")
+        ax.add_line(self.line)
+        ax.add_patch(self.circle)
+        return [self.line, self.circle]
+
+    def render(self, log):
+        """Render the given timestep."""
+        angle = float(log[0])
+        x = self.length * np.sin(angle)
+        y = -self.length * np.cos(angle)
+        self.line.set_xdata([0.0, x])
+        self.line.set_ydata([0.0, y])
+        self.circle.center = (x, y)
+        return [self.line, self.circle]

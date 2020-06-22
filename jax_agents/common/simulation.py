@@ -26,6 +26,8 @@
 import csv
 import os
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 
 def simulate(environment, policy, timesteps, folder):
@@ -50,6 +52,21 @@ def simulate(environment, policy, timesteps, folder):
     return
 
 
+def render_csv(env, folder):
+    """Load the csv file from the simulation and render it."""
+    fig = plt.figure(dpi=140, tight_layout=True)
+    csv_reader_gen = (row.split(',') for row in open(folder + "sim.csv"))
+    next(csv_reader_gen)  # ignore first line (header)
+    env.initialize_rendering(next(csv_reader_gen), fig)
+    animation = FuncAnimation(fig,
+                              func=env.render,
+                              frames=csv_reader_gen,
+                              blit=True,
+                              interval=env.dt * 1000)  # milliseconds
+    animation.save(folder + "animation.mp4")
+    return
+
+
 class SimLogger():
     """Log data from simulation in a csv file."""
 
@@ -57,7 +74,7 @@ class SimLogger():
         """Initialize csv file."""
         # Create csv
         os.makedirs(folder)
-        self.csv_file = open(folder+"sim.csv", 'w', newline='')
+        self.csv_file = open(folder + "sim.csv", 'w', newline='')
         self.field_names = field_names
         self.writer = csv.DictWriter(self.csv_file, fieldnames=field_names)
         self.writer.writeheader()
