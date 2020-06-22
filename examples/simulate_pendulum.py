@@ -40,7 +40,7 @@ def main():
     policy = partial(random_policy, action_dim=environment.action_dim)
     timesteps = 200
     simulate(environment, policy, timesteps, folder)
-    render_csv(environment, folder)
+    render_csv(environment, folder, timesteps)
     return
 
 

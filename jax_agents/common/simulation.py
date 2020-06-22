@@ -52,7 +52,7 @@ def simulate(environment, policy, timesteps, folder):
     return
 
 
-def render_csv(env, folder):
+def render_csv(env, folder, timesteps):
     """Load the csv file from the simulation and render it."""
     fig = plt.figure(dpi=140, tight_layout=True)
     csv_reader_gen = (row.split(',') for row in open(folder + "sim.csv"))
@@ -62,6 +62,8 @@ def render_csv(env, folder):
                               func=env.render,
                               frames=csv_reader_gen,
                               blit=True,
+                              save_count=timesteps,
+                              repeat=False,
                               interval=env.dt * 1000)  # milliseconds
     animation.save(folder + "animation.mp4")
     return
