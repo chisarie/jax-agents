@@ -39,20 +39,23 @@ class DDPG():
         self.q_net = hk.transform(q_net)
         self.pi_optimizer = pi_optimizer
         self.q_optimizer = q_optimizer
-        self.initialized = False
         return
 
-    def initialize_functions(self, data_point):
+    def initialize_functions(self, state, action, seed):
         """Initialize pi, q parameters and optimizers states."""
-        state = data_point[0]
-        action = data_point[1]
+        rng = jax.random.PRNGKey(seed)  # rundom number generator
         state_action = jnp.hstack((state, action))
-        self.pi_params = self.pi_net.init(jax.random.PRNGKey(42), state)
-        self.q_params = self.q_net.init(jax.random.PRNGKey(27), state_action)
+        self.pi_params = self.pi_net.init(rng, state)
+        self.q_params = self.q_net.init(rng, state_action)
         self.pi_opt_state = self.pi_optimizer.init(self.pi_params)
         self.q_opt_state = self.q_optimizer.init(self.q_params)
-        self.initialized = True
+        self.state_dim = len(state)
+        self.action_dim = len(action)
         return
+
+    def select_action(self, state):
+        """Output on policy action."""
+        return self.pi_net.apply(self.pi_params, state)
 
     def train_step(self, data_batch):
         """Update all functions."""
@@ -68,27 +71,36 @@ class DDPG():
         self.q_params = optix.apply_updates(self.q_params, q_updates)
         return
 
-    def _pi_loss(self, data_point):
-        state, _, _, _ = data_point
-        pi_state = self.pi_net.apply(self.pi_params, state)
+    def _pi_loss(self, params, data_point):
+        state = data_point[:self.state_dim]
+        pi_state = self.pi_net.apply(params, state)
         q_state_pi_state = self.q_net.apply(
             self.q_params, jnp.hstack((state, pi_state)))
         loss = - q_state_pi_state
         return loss
 
-    def _pi_loss_batched(self, batched_data):
-        return jax.vmap(self._pi_loss)(batched_data)
+    def _pi_loss_batched(self, params, batched_data):
+        return jnp.mean(jax.vmap(
+            self._pi_loss, in_axes=(None, 0))(params, batched_data))
 
-    def _q_loss(self, data_point):
-        state, action, reward, next_state = data_point
+    def _q_loss(self, params, data_point):
+        state, action, reward, next_state = self._expand_data_tuple(data_point)
         pi_next_state = self.pi_net.apply(self.pi_params, next_state)
         target_value = self.q_net.apply(
-            self.q_params, jnp.hstack((next_state, pi_next_state)))
+            params, jnp.hstack((next_state, pi_next_state)))
         bellman_target = reward + self.gamma * target_value
         q_state_action = self.q_net.apply(
-            self.q_params, jnp.hstack((state, action)))
+            params, jnp.hstack((state, action)))
         loss = jnp.square(bellman_target - q_state_action)
         return loss
 
-    def _q_loss_batched(self, batched_data):
-        return jax.vmap(self._q_loss)(batched_data)
+    def _q_loss_batched(self, params, batched_data):
+        return jnp.mean(jax.vmap(
+            self._q_loss, in_axes=(None, 0))(params, batched_data))
+
+    def _expand_data_tuple(self, data_point):
+        state = data_point[:self.state_dim]
+        action = data_point[self.state_dim:self.state_dim+self.action_dim]
+        reward = data_point[self.state_dim+self.action_dim]
+        next_state = data_point[self.state_dim+self.action_dim+1:]
+        return state, action, reward, next_state

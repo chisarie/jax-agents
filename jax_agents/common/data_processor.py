@@ -25,6 +25,7 @@
 
 from collections import deque
 import jax.numpy as jnp
+from jax.ops import index_update
 from jax import random
 
 
@@ -34,35 +35,25 @@ class ReplayBuffer():
     def __init__(self, buffer_size, state_dim, action_dim, seed):
         """Initialize replay buffer with zeros."""
         self.rng = random.PRNGKey(seed)  # rundom number generator
-        self.states = jnp.zeros((buffer_size, state_dim))
-        self.actions = jnp.zeros((buffer_size, action_dim))
-        self.rewards = jnp.zeros((buffer_size))
-        self.next_states = jnp.zeros((buffer_size, state_dim))
+        data_point_dim = 2 * state_dim + action_dim + 1
+        self.data_points = jnp.zeros((buffer_size, data_point_dim))
         self.ptr, self.size, self.buffer_size = 0, 0, buffer_size
         return
 
-    def store(self, state, action, reward, next_state):
+    def store(self, data_tuple):
         """Store new experience."""
-        self.states[self.ptr] = state
-        self.actions[self.ptr] = action
-        self.rewards[self.ptr] = reward
-        self.next_states[self.ptr] = next_state
+        data_point = jnp.hstack(data_tuple)
+        self.data_points = index_update(self.data_points, self.ptr, data_point)
         self.ptr = (self.ptr+1) % self.buffer_size
         self.size = min(self.size+1, self.buffer_size)
         return
 
     def sample_batch(self, batch_size):
         """Sample past experience."""
-        if batch_size > self.size * 2:
-            return None
         self.rng, rng_input = random.split(self.rng)
-        indexes = random.randint(rng_input, shape=(batch_size),
+        indexes = random.randint(rng_input, shape=(batch_size,),
                                  minval=0, maxval=self.size)
-        data_batch = jnp.array(self.states[indexes],
-                               self.actions[indexes],
-                               self.rewards[indexes],
-                               self.next_states[indexes])
-        return jnp.transpose(data_batch)
+        return self.data_points[indexes]
 
 
 class DataProcessor:
@@ -91,10 +82,10 @@ class DataProcessor:
         cum_reward = self.n_steps_deque[-1][2] + reward
         self.n_steps_deque.append((state, action, cum_reward))
         if len(self.n_steps_deque) == self.n_steps_deque.maxlen:
-            self.replay_buffer.store(self.n_steps_deque[0][0],  # first state
-                                     self.n_steps_deque[0][1],  # first action
-                                     cum_reward - self.n_steps_deque[0][2],
-                                     state)
+            self.replay_buffer.store((self.n_steps_deque[0][0],  # first state
+                                      self.n_steps_deque[0][1],  # first action
+                                      cum_reward - self.n_steps_deque[0][2],
+                                      state))
         if reset_flag:
             self.n_steps_deque.clear()
         return

@@ -23,17 +23,26 @@
 
 """Simple training loop: interact with environment and do training step."""
 
-from jax_agents.common.data_processor import DataProcessor
+from jax_agents.common.data_processor import DataProcessor, ReplayBuffer
+from jax_agents.algorithms.random_agent import RandomAgent
 
 
-def train(timesteps, environment, algorithm, n_steps, buffer_size, batch_size):
+def train(timesteps, environment, algorithm,
+          n_steps, buffer_size, batch_size, seed):
     """Start training loop."""
-    data_processor = DataProcessor(
-        n_steps, buffer_size, environment.state_dim, environment.action_dim)
+    # Initialize data processor
+    replay_buffer = ReplayBuffer(
+        buffer_size, environment.state_dim, environment.action_dim, seed)
+    data_processor = DataProcessor(n_steps, replay_buffer)
+    # Initialize Networks
     state = environment.reset()
+    random_agent = RandomAgent(seed, environment.action_dim)
+    random_action = random_agent.select_action(state)
+    algorithm.initialize_functions(state, random_action, seed)
+    # Train loop
     for _ in range(timesteps):
         # Interact with environment
-        normed_state = environment.normed_state(state)
+        normed_state = environment.norm_state(state)
         scaled_action = algorithm.select_action(normed_state)
         action = environment.rescale_action(scaled_action)
         reset_flag = environment.check_if_done(state)
@@ -44,10 +53,8 @@ def train(timesteps, environment, algorithm, n_steps, buffer_size, batch_size):
         else:
             state = environment.step(state, action)
         # Do training step
-        data_batch = data_processor.replay_buffer.sample_batch(batch_size)
-        if not data_batch:
+        if replay_buffer.size < batch_size * 2:
             continue
-        if not algorithm.initialized:
-            algorithm.initialize_functions(data_batch[0])
+        data_batch = data_processor.replay_buffer.sample_batch(batch_size)
         algorithm.train_step(data_batch)
-        return
+    return

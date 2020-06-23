@@ -27,14 +27,25 @@ import haiku as hk
 import jax.numpy as jnp
 
 
-class FeedForwardPolicyNet():
-    """A simple feedforward neural network with tanh output."""
+# class FeedForwardPolicyNet():
+#     """A simple feedforward neural network with tanh output."""
 
-    def __init__(self, output_sizes):
-        """Construct the MLP."""
-        self._net = hk.Sequential([hk.nets.MLP(output_sizes), jnp.tanh])
-        return
+#     def __init__(self, output_sizes):
+#         """Construct the MLP."""
+#         self._net = hk.Sequential([hk.nets.MLP(output_sizes), jnp.tanh])
+#         return
 
-    def __call__(self, x):
-        """Forward the network."""
-        return self._net
+#     def __call__(self, x):
+#         """Forward the network."""
+#         return self._net
+
+def mlp_policy_net(x, output_sizes):
+    """Return simple feedforward neural network with tanh output."""
+    net = hk.Sequential([hk.nets.MLP(output_sizes), jnp.tanh])
+    return net(x)
+
+
+def mlp_value_net(x, output_sizes):
+    """Return simple feedforward neural network with tanh output."""
+    net = hk.nets.MLP(output_sizes)
+    return net(x)

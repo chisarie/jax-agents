@@ -21,22 +21,35 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""A random policy useful for debugging environments."""
+"""Example on how to use the Jax Agents API for training an agent."""
 
-from jax import random
+from functools import partial
+from jax.experimental import optix
+
+from jax_agents.common.training import train
+from jax_agents.environments.pendulum import PendulumEnv
+from jax_agents.algorithms.ddpg import DDPG
+from jax_agents.common.networks import mlp_policy_net, mlp_value_net
 
 
-class RandomAgent():
-    """Generate a random number for each action."""
+def main():
+    """Run the example."""
+    random_seed = 1996
+    timesteps = int(1e4)
+    environment = PendulumEnv(random_seed)
+    pi_net = partial(
+        mlp_policy_net, output_sizes=[64, 64, environment.action_dim])
+    q_net = partial(mlp_value_net, output_sizes=[64, 64, 1])
+    pi_optimizer = optix.adam(learning_rate=1e-3)
+    q_optimizer = optix.adam(learning_rate=1e-3)
+    algorithm = DDPG(pi_net, q_net, pi_optimizer, q_optimizer)
+    n_steps = 1
+    buffer_size = int(1e4)
+    batch_size = 128
+    train(timesteps, environment, algorithm, n_steps,
+          buffer_size, batch_size, random_seed)
+    return
 
-    def __init__(self, seed, action_dim):
-        """Initialize random number gen and action dimension."""
-        self.rng = random.PRNGKey(seed)  # rundom number generator
-        self.action_dim = action_dim
-        return
 
-    def select_action(self, _):
-        """Return selected random action."""
-        self.rng, rng_input = random.split(self.rng)
-        return random.uniform(
-            rng_input, shape=(self.action_dim,), minval=-1.0, maxval=1.0)
+if __name__ == "__main__":
+    main()
