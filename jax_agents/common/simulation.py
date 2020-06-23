@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 
-def simulate(environment, policy, timesteps, folder):
+def simulate(environment, algorithm, timesteps, folder):
     """Simulate one episode."""
     state = environment.reset()
     field_names = environment.state_names + environment.action_names
@@ -38,7 +38,7 @@ def simulate(environment, policy, timesteps, folder):
     sim_logger = SimLogger(folder, field_names)
     for _ in range(timesteps):
         normed_state = environment.norm_state(state)
-        scaled_action = policy(normed_state)
+        scaled_action = algorithm.select_action(normed_state)
         action = environment.rescale_action(scaled_action)
         next_state = environment.step(state, action)
         reward = environment.reward_func(state, action, next_state)

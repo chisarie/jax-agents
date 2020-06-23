@@ -26,7 +26,16 @@
 from jax import random
 
 
-def random_policy(_, action_dim):
-    """Return a random number for each action."""
-    rng = random.PRNGKey(1996)
-    return random.uniform(rng, shape=(action_dim), minval=-1.0, maxval=1.0)
+class RandomAgent():
+    """Generate a random number for each action."""
+
+    def __init__(self, seed, action_dim):
+        """Initialize random number gen and action dimension."""
+        self.rng = random.PRNGKey(seed)  # rundom number generator
+        self.action_dim = action_dim
+        return
+
+    def select_action(self, _):
+        """Return selected random action."""
+        self.rng, rng_input = random.split(self.rng)
+        return random.uniform(rng_input, shape=(self.action_dim,), minval=-1.0, maxval=1.0)

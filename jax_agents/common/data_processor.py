@@ -31,8 +31,9 @@ from jax import random
 class ReplayBuffer():
     """A simple FIFO experience replay buffer for off-policy agents."""
 
-    def __init__(self, buffer_size, state_dim, action_dim):
+    def __init__(self, buffer_size, state_dim, action_dim, seed):
         """Initialize replay buffer with zeros."""
+        self.rng = random.PRNGKey(seed)  # rundom number generator
         self.states = jnp.zeros((buffer_size, state_dim))
         self.actions = jnp.zeros((buffer_size, action_dim))
         self.rewards = jnp.zeros((buffer_size))
@@ -54,8 +55,8 @@ class ReplayBuffer():
         """Sample past experience."""
         if batch_size > self.size * 2:
             return None
-        rng = random.PRNGKey(1996)
-        indexes = random.randint(rng, shape=(batch_size),
+        self.rng, rng_input = random.split(self.rng)
+        indexes = random.randint(rng_input, shape=(batch_size),
                                  minval=0, maxval=self.size)
         data_batch = jnp.array(self.states[indexes],
                                self.actions[indexes],
@@ -73,10 +74,10 @@ class DataProcessor:
     for off policy rl algorithms.
     """
 
-    def __init__(self, n_steps, buffer_size, state_dim, action_dim):
+    def __init__(self, n_steps, replay_buffer):
         """Initialize the multistep deque and the replay buffer."""
         self.n_steps_deque = deque(maxlen=n_steps+1)
-        self.replay_buffer = ReplayBuffer(buffer_size, state_dim, action_dim)
+        self.replay_buffer = replay_buffer
         return
 
     def data_callback(self, state, action, reward_func, reset_flag):

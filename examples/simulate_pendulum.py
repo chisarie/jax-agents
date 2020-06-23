@@ -25,19 +25,21 @@
 import datetime
 import os
 from functools import partial
+from jax import random
 
 from jax_agents.common.simulation import simulate, render_csv
-from jax_agents.algorithms.random_agent import random_policy
+from jax_agents.algorithms.random_agent import RandomAgent
 from jax_agents.environments import pendulum
 
 
 def main():
     """Run the example."""
+    random_seed = 56
     sim_name = "random_pendulum_example"
     time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     folder = os.getcwd() + "/examples/simulations/" + time + "/" + sim_name+"/"
-    environment = pendulum.PendulumEnv()
-    policy = partial(random_policy, action_dim=environment.action_dim)
+    environment = pendulum.PendulumEnv(random_seed)
+    policy = RandomAgent(random_seed, environment.action_dim)
     timesteps = 200
     simulate(environment, policy, timesteps, folder)
     render_csv(environment, folder, timesteps)

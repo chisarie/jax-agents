@@ -23,8 +23,9 @@
 
 """A simple inverted pendulum environment."""
 
-import random
+from jax import random
 import jax.numpy as jnp
+from jax.ops import index_update
 import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
 from jax_agents.common.runge_kutta import runge_kutta
@@ -55,12 +56,13 @@ class PendulumEnv():
         10 seconds, i.e. 200 steps at 20 Hz
     """
 
-    def __init__(self):
+    def __init__(self, seed):
         """Initialize environment."""
-        self.length = 1.0       # pole length [meters]
-        self.dt = 0.05          # timesteps length [seconds]
-        self.state_dim = 2      # dimension of state vector
-        self.action_dim = 1     # dimension of action vector
+        self.rng = random.PRNGKey(seed)  # rundom number generator
+        self.length = 1.0                # pole length [meters]
+        self.dt = 0.05                   # timesteps length [seconds]
+        self.state_dim = 2               # dimension of state vector
+        self.action_dim = 1              # dimension of action vector
         self.state_names = ["theta", "theta_dot"]
         self.action_names = ["torque"]
         return
@@ -80,7 +82,8 @@ class PendulumEnv():
         """Integrate the dynamics on step forward."""
         next_state = runge_kutta(self.pendulum_dynamics, state,
                                  action, self.dt)
-        next_state[0] %= (2*jnp.pi)  # wrap angle in [0, 2pi]
+        # wrap angle in [0, 2pi]
+        next_state = index_update(next_state, 0, next_state[0] % (2*jnp.pi))
         return next_state
 
     def reward_func(self, state, action, next_state):
@@ -94,7 +97,9 @@ class PendulumEnv():
 
     def reset(self):
         """Reset the state to start a new episode."""
-        angle = jnp.pi + random.uniform(-jnp.deg2rad(10), jnp.deg2rad(10))
+        self.rng, rng_input = random.split(self.rng)
+        angle = jnp.pi + random.uniform(
+            rng_input, minval=-jnp.deg2rad(10), maxval=jnp.deg2rad(10))
         angular_velocity = 0.0
         return jnp.array([angle, angular_velocity])  # state
 
@@ -112,11 +117,12 @@ class PendulumEnv():
         # States
         theta = state[0]
         theta_dot = state[1]
+        torque = action[0]
 
-        x_dot = jnp.empty(2)
-        x_dot[0] = theta_dot
-        x_dot[1] = (action - jnp.sin(theta) * g / self.length
-                    - theta_dot * b / (m * self.length**2))
+        x_dot = jnp.array([theta_dot,
+                          (torque - jnp.sin(theta) * g / self.length
+                           - theta_dot * b / (m * self.length**2))
+                           ])
         return x_dot
 
     def initialize_rendering(self, log, fig):
