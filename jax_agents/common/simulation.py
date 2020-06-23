@@ -74,7 +74,6 @@ class SimLogger():
 
     def __init__(self, folder, field_names):
         """Initialize csv file."""
-        # Create csv
         os.makedirs(folder)
         self.csv_file = open(folder + "sim.csv", 'w', newline='')
         self.field_names = field_names

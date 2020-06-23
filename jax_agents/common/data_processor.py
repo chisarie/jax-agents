@@ -22,11 +22,13 @@
 # SOFTWARE.
 
 """Process data stream from interactions."""
-
-from collections import deque
+import csv
+import os
+import time
 import jax.numpy as jnp
 from jax.ops import index_update
 from jax import random
+from collections import deque
 
 
 class ReplayBuffer():
@@ -65,13 +67,15 @@ class DataProcessor:
     for off policy rl algorithms.
     """
 
-    def __init__(self, n_steps, replay_buffer):
+    def __init__(self, n_steps, replay_buffer, folder):
         """Initialize the multistep deque and the replay buffer."""
         self.n_steps_deque = deque(maxlen=n_steps+1)
         self.replay_buffer = replay_buffer
+        self.logger = EpisodeLogger(folder)
+        self.start_time = time.time()
         return
 
-    def data_callback(self, state, action, reward_func, reset_flag):
+    def data_callback(self, state, action, reward_func, reset_flag, timestep):
         """Fill the deque and the replay buffer."""
         if len(self.n_steps_deque) == 0:
             self.n_steps_deque.append((state, action, 0.0))
@@ -88,4 +92,38 @@ class DataProcessor:
                                       state))
         if reset_flag:
             self.n_steps_deque.clear()
+            self.logger.log(cum_reward, timestep, time.time()-self.start_time)
+        return
+
+    def close(self):
+        """Close logger file."""
+        self.logger.close()
+        return
+
+
+class EpisodeLogger():
+    """Monitors training and logs reward, timesteps and seconds."""
+
+    def __init__(self, folder):
+        """Initialize csv writer for logging."""
+        os.makedirs(folder)
+        self.csv_file = open(folder+"monitor.csv", 'w', newline='')
+        self.field_names = ["reward", "timesteps", "seconds"]
+        self.writer = csv.DictWriter(
+            self.csv_file, fieldnames=self.field_names)
+        self.writer.writeheader()
+        self.csv_file.flush()
+        return
+
+    def log(self, reward, timesteps, seconds):
+        """Write to csv."""
+        log_data = jnp.array([reward, timesteps, seconds])
+        log_data_dict = dict(zip(self.field_names, log_data))
+        self.writer.writerow(log_data_dict)
+        self.csv_file.flush()
+        return
+
+    def close(self):
+        """Close logger file."""
+        self.csv_file.close()
         return

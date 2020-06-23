@@ -34,6 +34,7 @@ class DDPG():
 
     def __init__(self, pi_net, q_net, pi_optimizer, q_optimizer):
         """Initialize pi, q functions, and optimizers."""
+        # TODO: Functionalize: put this in a class ddpg state, and functionalize the rest
         self.gamma = 0.99
         self.pi_net = hk.transform(pi_net)
         self.q_net = hk.transform(q_net)

@@ -24,8 +24,6 @@
 """Example on how to use the Jax Agents API for running a simulation."""
 import datetime
 import os
-from functools import partial
-from jax import random
 
 from jax_agents.common.simulation import simulate, render_csv
 from jax_agents.algorithms.random_agent import RandomAgent

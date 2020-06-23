@@ -27,34 +27,40 @@ from jax_agents.common.data_processor import DataProcessor, ReplayBuffer
 from jax_agents.algorithms.random_agent import RandomAgent
 
 
-def train(timesteps, environment, algorithm,
-          n_steps, buffer_size, batch_size, seed):
+def train(timesteps, environment, algorithm, episode_len,
+          n_steps, buffer_size, batch_size, seed, folder):
     """Start training loop."""
-    # Initialize data processor
-    replay_buffer = ReplayBuffer(
-        buffer_size, environment.state_dim, environment.action_dim, seed)
-    data_processor = DataProcessor(n_steps, replay_buffer)
     # Initialize Networks
     state = environment.reset()
     random_agent = RandomAgent(seed, environment.action_dim)
     random_action = random_agent.select_action(state)
     algorithm.initialize_functions(state, random_action, seed)
+    # Initialize data processor
+    replay_buffer = ReplayBuffer(
+        buffer_size, environment.state_dim, environment.action_dim, seed)
+    data_processor = DataProcessor(n_steps, replay_buffer, folder)
     # Train loop
-    for _ in range(timesteps):
+    episode_start = 0
+    for timestep in range(timesteps):
+        print(timestep)
         # Interact with environment
         normed_state = environment.norm_state(state)
         scaled_action = algorithm.select_action(normed_state)
         action = environment.rescale_action(scaled_action)
-        reset_flag = environment.check_if_done(state)
+        reset_flag = (environment.check_if_done(state) or
+                      timestep - episode_start == episode_len)
         data_processor.data_callback(
-            state, action, environment.reward_func, reset_flag)
+            state, action, environment.reward_func, reset_flag, timestep)
         if reset_flag:
             state = environment.reset()
+            episode_start = timestep + 1
         else:
             state = environment.step(state, action)
         # Do training step
         if replay_buffer.size < batch_size * 2:
             continue
         data_batch = data_processor.replay_buffer.sample_batch(batch_size)
+        # TODO: norm data !!
         algorithm.train_step(data_batch)
+    data_processor.close()
     return

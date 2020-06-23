@@ -23,6 +23,8 @@
 
 """Example on how to use the Jax Agents API for training an agent."""
 
+import datetime
+import os
 from functools import partial
 from jax.experimental import optix
 
@@ -35,6 +37,9 @@ from jax_agents.common.networks import mlp_policy_net, mlp_value_net
 def main():
     """Run the example."""
     random_seed = 1996
+    name = "ddpg_pendulum_example"
+    time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    folder = os.getcwd() + "/examples/training/" + time + "/" + name+"/"
     timesteps = int(1e4)
     environment = PendulumEnv(random_seed)
     pi_net = partial(
@@ -43,11 +48,12 @@ def main():
     pi_optimizer = optix.adam(learning_rate=1e-3)
     q_optimizer = optix.adam(learning_rate=1e-3)
     algorithm = DDPG(pi_net, q_net, pi_optimizer, q_optimizer)
+    episode_len = 120
     n_steps = 1
     buffer_size = int(1e4)
     batch_size = 128
-    train(timesteps, environment, algorithm, n_steps,
-          buffer_size, batch_size, random_seed)
+    train(timesteps, environment, algorithm, episode_len, n_steps,
+          buffer_size, batch_size, random_seed, folder)
     return
 
 
