@@ -25,19 +25,8 @@
 
 import haiku as hk
 import jax
-
-
-class FeedForwardNetwork():
-    """A simple feedforward neural network with tanh output."""
-
-    def __init__(self, output_sizes):
-        """Construct the MLP."""
-        self._net = hk.Sequential([hk.nets.MLP(output_sizes), jax.lax.tanh])
-        return
-
-    def __call__(self, x):
-        """Forward the network."""
-        return self._net
+import jax.numpy as jnp
+from jax.experimental import optix
 
 
 class DDPG():
@@ -45,32 +34,46 @@ class DDPG():
 
     def __init__(self, pi_net, q_net, pi_optimizer, q_optimizer):
         """Initialize pi, q functions, and optimizers."""
+        self.gamma = 0.99
         self.pi_net = hk.transform(pi_net)
         self.q_net = hk.transform(q_net)
         self.pi_optimizer = pi_optimizer
         self.q_optimizer = q_optimizer
+        self.initialized = False
         return
 
     def initialize_functions(self, data_point):
         """Initialize pi, q parameters and optimizers states."""
         state = data_point[0]
         action = data_point[1]
-        state_action = jax.numpy.hstack((state, action))
+        state_action = jnp.hstack((state, action))
         self.pi_params = self.pi_net.init(jax.random.PRNGKey(42), state)
         self.q_params = self.q_net.init(jax.random.PRNGKey(27), state_action)
         self.pi_opt_state = self.pi_optimizer.init(self.pi_params)
         self.q_opt_state = self.q_optimizer.init(self.q_params)
+        self.initialized = True
         return
 
     def train_step(self, data_batch):
         """Update all functions."""
-        pi_grads = jax.grad(self._pi_loss)(self.pi_params, data_batch)
-        # TODO
+        # Update Pi
+        pi_grads = jax.grad(self._pi_loss_batched)(self.pi_params, data_batch)
+        pi_updates, self.pi_opt_state = self.pi_optimizer.update(
+            pi_grads, self.pi_opt_state)
+        self.pi_params = optix.apply_updates(self.pi_params, pi_updates)
+        # Update Q
+        q_grads = jax.grad(self._q_loss_batched)(self.q_params, data_batch)
+        q_updates, self.q_opt_state = self.q_optimizer.update(
+            q_grads, self.q_opt_state)
+        self.q_params = optix.apply_updates(self.q_params, q_updates)
         return
 
     def _pi_loss(self, data_point):
-        state, action, reward, next_state = data_point
-        loss = 0.0 # TODO
+        state, _, _, _ = data_point
+        pi_state = self.pi_net.apply(self.pi_params, state)
+        q_state_pi_state = self.q_net.apply(
+            self.q_params, jnp.hstack((state, pi_state)))
+        loss = - q_state_pi_state
         return loss
 
     def _pi_loss_batched(self, batched_data):
@@ -78,7 +81,13 @@ class DDPG():
 
     def _q_loss(self, data_point):
         state, action, reward, next_state = data_point
-        loss = 0.0 # TODO
+        pi_next_state = self.pi_net.apply(self.pi_params, next_state)
+        target_value = self.q_net.apply(
+            self.q_params, jnp.hstack((next_state, pi_next_state)))
+        bellman_target = reward + self.gamma * target_value
+        q_state_action = self.q_net.apply(
+            self.q_params, jnp.hstack((state, action)))
+        loss = jnp.square(bellman_target - q_state_action)
         return loss
 
     def _q_loss_batched(self, batched_data):

@@ -52,6 +52,8 @@ class ReplayBuffer():
 
     def sample_batch(self, batch_size):
         """Sample past experience."""
+        if batch_size > self.size * 2:
+            return None
         rng = random.PRNGKey(1996)
         indexes = random.randint(rng, shape=(batch_size),
                                  minval=0, maxval=self.size)
