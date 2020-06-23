@@ -39,6 +39,9 @@ def train(timesteps, environment, algorithm, episode_len,
     replay_buffer = ReplayBuffer(
         buffer_size, environment.state_dim, environment.action_dim, seed)
     data_processor = DataProcessor(n_steps, replay_buffer, folder)
+
+    # TODO: separate initialization
+
     # Train loop
     episode_start = 0
     for timestep in range(timesteps):

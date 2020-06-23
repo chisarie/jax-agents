@@ -27,6 +27,7 @@ import datetime
 import os
 from functools import partial
 from jax.experimental import optix
+import haiku as hk
 
 from jax_agents.common.training import train
 from jax_agents.environments.pendulum import PendulumEnv
@@ -42,12 +43,15 @@ def main():
     folder = os.getcwd() + "/examples/training/" + time + "/" + name+"/"
     timesteps = int(1e4)
     environment = PendulumEnv(random_seed)
-    pi_net = partial(
-        mlp_policy_net, output_sizes=[64, 64, environment.action_dim])
-    q_net = partial(mlp_value_net, output_sizes=[64, 64, 1])
+
+    # Put this in separate function with args: output_sizes, learning_rate. And out: algo
+    pi_net = hk.transform(partial(
+        mlp_policy_net, output_sizes=[64, 64, environment.action_dim]))
+    q_net = hk.transform(partial(mlp_value_net, output_sizes=[64, 64, 1]))
     pi_optimizer = optix.adam(learning_rate=1e-3)
     q_optimizer = optix.adam(learning_rate=1e-3)
     algorithm = DDPG(pi_net, q_net, pi_optimizer, q_optimizer)
+
     episode_len = 120
     n_steps = 1
     buffer_size = int(1e4)
