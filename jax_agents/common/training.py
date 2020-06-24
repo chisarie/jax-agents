@@ -27,21 +27,21 @@ from jax_agents.common.data_processor import DataProcessor, ReplayBuffer
 from jax_agents.algorithms.random_agent import RandomAgent
 
 
-def train(timesteps, environment, algorithm, episode_len,
-          n_steps, buffer_size, batch_size, seed, folder):
-    """Start training loop."""
-    # Initialize Networks
-    state = environment.reset()
-    random_agent = RandomAgent(seed, environment.action_dim)
-    random_action = random_agent.select_action(state)
-    algorithm.initialize_functions(state, random_action, seed)
-    # Initialize data processor
-    replay_buffer = ReplayBuffer(
-        buffer_size, environment.state_dim, environment.action_dim, seed)
-    data_processor = DataProcessor(n_steps, replay_buffer, folder)
+# def train(timesteps, environment, algorithm, episode_len,
+#           n_steps, buffer_size, batch_size, seed, folder):
+#     """Start training loop."""
+#     # Initialize Networks
+#     state = environment.reset()
+#     random_agent = RandomAgent(seed, environment.action_dim)
+#     random_action = random_agent.select_action(state)
+#     algorithm.initialize_functions(state, random_action, seed)
+#     # Initialize data processor
+#     replay_buffer = ReplayBuffer(
+#         buffer_size, environment.state_dim, environment.action_dim, seed)
+#     data_processor = DataProcessor(n_steps, replay_buffer, folder)
 
     # TODO: separate initialization
-
+def train(environment, algorithm, data_processor, timesteps, episode_len, batch_size):
     # Train loop
     episode_start = 0
     for timestep in range(timesteps):
@@ -60,7 +60,7 @@ def train(timesteps, environment, algorithm, episode_len,
         else:
             state = environment.step(state, action)
         # Do training step
-        if replay_buffer.size < batch_size * 2:
+        if data_processor.replay_buffer.size < batch_size * 2:
             continue
         data_batch = data_processor.replay_buffer.sample_batch(batch_size)
         # TODO: norm data !!
