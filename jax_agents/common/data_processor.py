@@ -75,21 +75,20 @@ class DataProcessor:
         self.start_time = time.time()
         return
 
-    def data_callback(self, state, action, reward_func, reset_flag, timestep):
+    def data_callback(self, normed_state, normed_action, reward,
+                      reset_flag, timestep):
         """Fill the deque and the replay buffer."""
-        if len(self.n_steps_deque) == 0:
-            self.n_steps_deque.append((state, action, 0.0))
-            return
-        reward = reward_func(self.n_steps_deque[-1][0],  # previous state
-                             self.n_steps_deque[-1][1],  # previous action
-                             state)
-        cum_reward = self.n_steps_deque[-1][2] + reward
-        self.n_steps_deque.append((state, action, cum_reward))
+        if len(self.n_steps_deque) > 0:
+            prev_reward = self.n_steps_deque[-1][2]
+        else:
+            prev_reward = 0.0
+        cum_reward = prev_reward + reward
+        self.n_steps_deque.append((normed_state, normed_action, cum_reward))
         if len(self.n_steps_deque) == self.n_steps_deque.maxlen:
             self.replay_buffer.store((self.n_steps_deque[0][0],  # first state
                                       self.n_steps_deque[0][1],  # first action
                                       cum_reward - self.n_steps_deque[0][2],
-                                      state))
+                                      normed_state))
         if reset_flag:
             self.n_steps_deque.clear()
             self.logger.log(cum_reward, timestep, time.time()-self.start_time)

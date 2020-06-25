@@ -36,7 +36,17 @@ from jax_agents.common.networks import mlp_policy_net, mlp_value_net
 
 @dataclass
 class DDPGFunc:
-    """Docstring."""
+    """Config to initialize the DDPG functions.
+
+    Args:
+        pi_net: policy neural network
+        q_net: q function neural network
+        pi_optimizer: policy optimizer (adam)
+        q_optimizer: q function optimizer (adam)
+        gamma: discount factor
+        state_dim: dimension of the state vector.
+        action_dim: dimension of the action vector.
+    """
 
     pi_net: Callable
     q_net: Callable
@@ -49,7 +59,14 @@ class DDPGFunc:
 
 @dataclass
 class DDPGState:
-    """DocStrin."""
+    """State of the DDPG networks.
+
+    Args:
+        pi_params: policy neural network parameters
+        q_params: q function neural network parameters
+        pi_opt_state: state of the policy optimizer (adam)
+        q_opt_state: state of the q function optimizer (adam)
+    """
 
     pi_params: Any
     q_params: Any
@@ -96,9 +113,8 @@ class DDPG():
         q_net = hk.transform(q_net)
         pi_optimizer = optix.adam(learning_rate=config.learning_rate)
         q_optimizer = optix.adam(learning_rate=config.learning_rate)
-        self.algo_func = DDPGFunc(pi_net, q_net, pi_optimizer, q_optimizer,
-                                  config.gamma, config.state_dim,
-                                  config.action_dim)
+        self.func = DDPGFunc(pi_net, q_net, pi_optimizer, q_optimizer,
+                             config.gamma, config.state_dim, config.action_dim)
         rng = jax.random.PRNGKey(config.seed)  # rundom number generator
         state = jnp.zeros(config.state_dim)
         state_action = jnp.zeros(config.state_dim + config.action_dim)
@@ -106,8 +122,7 @@ class DDPG():
         q_params = q_net.init(rng, state_action)
         pi_opt_state = pi_optimizer.init(pi_params)
         q_opt_state = q_optimizer.init(q_params)
-        self.algo_state = DDPGState(pi_params, q_params,
-                                    pi_opt_state, q_opt_state)
+        self.state = DDPGState(pi_params, q_params, pi_opt_state, q_opt_state)
         return
 
     @staticmethod

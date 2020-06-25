@@ -56,7 +56,7 @@ class PendulumEnv():
         10 seconds, i.e. 200 steps at 20 Hz
     """
 
-    def __init__(self, seed):
+    def __init__(self, seed=1996):
         """Initialize environment."""
         self.rng = random.PRNGKey(seed)  # rundom number generator
         self.length = 1.0                # pole length [meters]

@@ -25,39 +25,22 @@
 
 import datetime
 import os
-from functools import partial
-from jax.experimental import optix
-import haiku as hk
-
-from jax_agents.common.training import train
+from jax_agents.common.training import train, TrainConfig
 from jax_agents.environments.pendulum import PendulumEnv
-from jax_agents.algorithms.ddpg import DDPG
-from jax_agents.common.networks import mlp_policy_net, mlp_value_net
+from jax_agents.algorithms.ddpg import DDPG, DDPGConfig
 
 
 def main():
-    """Run the example."""
-    random_seed = 1996
+    """Run the example: ddpg to solve the pendulum environment."""
     name = "ddpg_pendulum_example"
     time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     folder = os.getcwd() + "/examples/training/" + time + "/" + name+"/"
-    timesteps = int(1e4)
-    environment = PendulumEnv(random_seed)
-
-    # Put this in separate function with args: output_sizes, learning_rate. And out: algo
-    pi_net = hk.transform(partial(
-        mlp_policy_net, output_sizes=[64, 64, environment.action_dim]))
-    q_net = hk.transform(partial(mlp_value_net, output_sizes=[64, 64, 1]))
-    pi_optimizer = optix.adam(learning_rate=1e-3)
-    q_optimizer = optix.adam(learning_rate=1e-3)
-    algorithm = DDPG(pi_net, q_net, pi_optimizer, q_optimizer)
-
-    episode_len = 120
-    n_steps = 1
-    buffer_size = int(1e4)
-    batch_size = 128
-    train(timesteps, environment, algorithm, episode_len, n_steps,
-          buffer_size, batch_size, random_seed, folder)
+    env = PendulumEnv()
+    ddpg_config = DDPGConfig(env.state_dim, env.action_dim)
+    ddpg = DDPG(ddpg_config)
+    train_config = TrainConfig(
+        env=env, algorithm=ddpg, folder=folder, timesteps=int(1e4))
+    train(train_config)
     return
 
 
