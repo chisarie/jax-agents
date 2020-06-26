@@ -22,13 +22,11 @@
 # SOFTWARE.
 
 """Simple training loop: interact with environment and do training step."""
-from dataclasses import dataclass
-from typing import Any
+from typing import Any, NamedTuple
 from jax_agents.common.data_processor import DataProcessor, ReplayBuffer
 
 
-@dataclass
-class TrainConfig:
+class TrainConfig(NamedTuple):
     """Config to initialize training loop.
 
     Args:
@@ -66,7 +64,7 @@ class TrainConfig:
 
 def train(config: TrainConfig):
     """Start the training loop with the given configuration."""
-    config.initialize_data_processor()
+    config._initialize_data_processor()
     state = config.env.reset()
     reward = 0.0
     episode_len = 0
@@ -82,7 +80,8 @@ def train(config: TrainConfig):
 
 def _interaction_step(config, state, reward, timestep, episode_len):
     normed_state = config.env.norm_state(state)
-    scaled_action = config.algorithm.select_action(normed_state)
+    scaled_action = config.algorithm.select_action(
+        normed_state, config.algorithm.func, config.algorithm.state)
     action = config.env.rescale_action(scaled_action)
     reset_flag = (config.env.check_if_done(state) or
                   episode_len == config.max_episode_len)
@@ -97,7 +96,7 @@ def _interaction_step(config, state, reward, timestep, episode_len):
 
 def _update_step(config):
     if config.data_processor.replay_buffer.size < config.batch_size * 2:
-        return
+        return config.algorithm.state
     data_batch = config._sample_batch()
     return config.algorithm.train_step(
         data_batch, config.algorithm.func, config.algorithm.state)
