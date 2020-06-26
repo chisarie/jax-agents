@@ -21,34 +21,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""Example on how to use the Jax Agents API for training an agent."""
+"""Plotting utilities."""
 
-import datetime
-import os
-from jax_agents.common.training import train, TrainConfig
-from jax_agents.common.simulation import simulate, render_csv
-from jax_agents.common.plotting import plot_train_stats
-from jax_agents.environments.pendulum import PendulumEnv
-from jax_agents.algorithms.ddpg import DDPG, DDPGConfig
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
-def main():
-    """Run the example: ddpg to solve the pendulum environment."""
-    name = "ddpg_pendulum_example"
-    time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    folder = os.getcwd() + "/examples/training/" + time + "/" + name+"/"
-    env = PendulumEnv()
-    ddpg_config = DDPGConfig(env.state_dim, env.action_dim)
-    ddpg = DDPG(ddpg_config)
-    train_config = TrainConfig(
-        env=env, algorithm=ddpg, folder=folder, timesteps=int(2e4))
-    train(train_config)
-    plot_train_stats(folder)
-    sim_timesteps = 200
-    simulate(env, ddpg, sim_timesteps, folder)
-    render_csv(env, folder, sim_timesteps)
+def plot_train_stats(path):
+    """Plot training statistics."""
+    stats = pd.read_csv(path+"monitor.csv")
+    reward_mean = stats.reward.rolling(window=5).mean()
+    reward_std = stats.reward.rolling(window=5).std()
+    fig, ax = plt.subplots(figsize=(18, 9))
+    ax.plot(stats.timesteps, reward_mean)
+    ax.fill_between(stats.timesteps, reward_mean-reward_std,
+                    reward_mean+reward_std, alpha=0.4)
+    ax.set_xlabel('Timesteps')
+    ax.set_ylabel('Reward')
+    fig.savefig(path+"training_stats.png", bbox_inches='tight')
     return
-
-
-if __name__ == "__main__":
-    main()

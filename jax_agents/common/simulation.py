@@ -63,7 +63,7 @@ def render_csv(env, folder, timesteps):
                               func=env.render,
                               frames=csv_reader_gen,
                               blit=True,
-                              save_count=timesteps,
+                              save_count=timesteps-5,
                               repeat=False,
                               interval=env.dt * 1000)  # milliseconds
     animation.save(folder + "animation.mp4")
