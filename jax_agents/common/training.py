@@ -22,11 +22,13 @@
 # SOFTWARE.
 
 """Simple training loop: interact with environment and do training step."""
-from typing import Any, NamedTuple
+from dataclasses import dataclass
+from typing import Any
 from jax_agents.common.data_processor import DataProcessor, ReplayBuffer
 
 
-class TrainConfig(NamedTuple):
+@dataclass
+class TrainConfig:
     """Config to initialize training loop.
 
     Args:
