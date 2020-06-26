@@ -22,6 +22,7 @@
 # SOFTWARE.
 
 """Simple training loop: interact with environment and do training step."""
+import pickle
 from dataclasses import dataclass
 from typing import Any
 from jax_agents.common.data_processor import DataProcessor, ReplayBuffer
@@ -77,6 +78,8 @@ def train(config: TrainConfig):
         # Update
         config.algorithm.state = _update_step(config)
     config.data_processor.close()
+    with open(config.folder+"algo_state.pickle", 'wb') as f:
+        pickle.dump(config.algorithm.state, f)
     return
 
 

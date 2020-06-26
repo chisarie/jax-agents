@@ -23,6 +23,7 @@
 
 """Deep Deterministic Policy Gradient (DDPG)."""
 
+import pickle
 from functools import partial
 from typing import Callable, Any, NamedTuple
 import haiku as hk
@@ -142,6 +143,13 @@ class DDPG():
         new_q_params = optix.apply_updates(algo_state.q_params, q_updates)
         return DDPGState(
             new_pi_params, new_q_params, new_pi_opt_state, new_q_opt_state)
+
+    @classmethod
+    def load(cls, config, state_path):
+        """Return a DDPG instance initialized with the pickled algo_state."""
+        algo = cls(config)
+        algo.state = pickle.load(state_path)
+        return algo
 
 
 def _pi_loss(pi_params, data_point, algo_func, algo_state):

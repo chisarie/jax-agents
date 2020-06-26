@@ -38,7 +38,8 @@ def simulate(environment, algorithm, timesteps, folder):
     sim_logger = SimLogger(folder, field_names)
     for _ in range(timesteps):
         normed_state = environment.norm_state(state)
-        scaled_action = algorithm.select_action(normed_state)
+        scaled_action = algorithm.select_action(
+            normed_state, algorithm.func, algorithm.state)
         action = environment.rescale_action(scaled_action)
         next_state = environment.step(state, action)
         reward = environment.reward_func(state, action, next_state)
@@ -74,7 +75,7 @@ class SimLogger():
 
     def __init__(self, folder, field_names):
         """Initialize csv file."""
-        os.makedirs(folder)
+        os.makedirs(folder, exist_ok=True)
         self.csv_file = open(folder + "sim.csv", 'w', newline='')
         self.field_names = field_names
         self.writer = csv.DictWriter(self.csv_file, fieldnames=field_names)

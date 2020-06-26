@@ -33,9 +33,11 @@ class RandomAgent():
         """Initialize random number gen and action dimension."""
         self.rng = random.PRNGKey(seed)  # rundom number generator
         self.action_dim = action_dim
+        self.func = None
+        self.state = None
         return
 
-    def select_action(self, _):
+    def select_action(self, *_):
         """Return selected random action."""
         self.rng, rng_input = random.split(self.rng)
         return random.uniform(

@@ -26,6 +26,7 @@
 import datetime
 import os
 from jax_agents.common.training import train, TrainConfig
+from jax_agents.common.simulation import simulate, render_csv
 from jax_agents.environments.pendulum import PendulumEnv
 from jax_agents.algorithms.ddpg import DDPG, DDPGConfig
 
@@ -39,8 +40,10 @@ def main():
     ddpg_config = DDPGConfig(env.state_dim, env.action_dim)
     ddpg = DDPG(ddpg_config)
     train_config = TrainConfig(
-        env=env, algorithm=ddpg, folder=folder, timesteps=int(1e4))
+        env=env, algorithm=ddpg, folder=folder, timesteps=int(2e4))
     train(train_config)
+    simulate(environment=env, algorithm=ddpg, timesteps=200, folder=folder)
+    render_csv(env, folder, timesteps=200)
     return
 
 
