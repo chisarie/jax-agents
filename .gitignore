@@ -8,3 +8,6 @@ __pycache__/
 # Results
 **/examples/simulations/**
 **/examples/training/**
+
+# Docs
+**/docs/_build/**
