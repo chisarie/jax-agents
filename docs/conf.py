@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'Jax Agents'
+project = 'jax-agents'
 copyright = '2020, Eugenio Chisari'
 author = 'Eugenio Chisari'
 

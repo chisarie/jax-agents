@@ -1,9 +1,9 @@
-.. Jax Agents documentation master file, created by
-   sphinx-quickstart on Sun Jun 28 19:52:24 2020.
+.. jax-agents documentation master file, created by
+   sphinx-quickstart on Sun Jun 28 20:06:31 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Jax Agents's documentation!
+Welcome to jax-agents's documentation!
 ======================================
 
 .. toctree::
