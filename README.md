@@ -25,7 +25,7 @@ folder = "path/to/your/logging_folder/"
 env = PendulumEnv()
 ddpg_config = DDPGConfig(env.state_dim, env.action_dim)
 algorithm = DDPG(ddpg_config)
-train_timesteps = (2e4)
+train_timesteps = int(2e4)
 train_config = TrainConfig(env, algorithm, folder, train_timesteps)
 train(train_config)
 plot_train_stats(folder)
