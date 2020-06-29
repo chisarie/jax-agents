@@ -35,7 +35,13 @@ render_csv(env, folder, sim_timesteps)
 ```
 
  This script will train an agent using the ddpg algorithm on the pendulum environment. During training, statistics are logged in the `monitor.csv` file. After training is complete, the statistics are plotted and a video
- of the trained agent is rendered. Other examples can be found in the `example` folder.
+ of the trained agent is rendered. Complete and runnable scripts can be found in the `example` folder.
+
+## Currently implemented algorithms
+
+More algorithms will be added in the next weeks. Currently, the following algorithms are implemented:
+
+* DDPG [[Paper](https://arxiv.org/abs/1509.02971)]
 
 ## How To Contribute
 
