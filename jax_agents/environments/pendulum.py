@@ -50,8 +50,8 @@ class PendulumEnv():
     Reward:
         Reward is 1 for every step in the upright position, -0.1 otherwise
     Starting State:
-        All states equal to zero except pole angle = pi + (-10, +10)
-        (i.e. pointing upwards)
+        Angle = pi + (-10, +10) (i.e. pointing upwards)
+        Velocity = 0.0
     Episode Length:
         10 seconds, i.e. 200 steps at 20 Hz
     """
