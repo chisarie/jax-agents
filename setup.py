@@ -34,12 +34,6 @@ setuptools.setup(
     author="Eugenio Chisari",
     author_email="eugenio.chisari@gmail.com",
     install_requires=[
-        'gym[atari,classic_control]>=0.11',
-        'scipy',
-        'joblib',
-        'cloudpickle>=0.5.5',
-        'opencv-python',
-        'numpy',
         'pandas',
         'matplotlib'
         ],
