@@ -39,8 +39,6 @@ setuptools.setup(
     install_requires=[
         'pandas',
         'matplotlib',
-        'jax',
-        'dm-haiku @ git+https://github.com/deepmind/dm-haiku'
         ],
     description="A reinforcement Learning library based on Jax",
     long_description=long_description,
