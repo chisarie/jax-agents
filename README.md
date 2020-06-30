@@ -1,5 +1,7 @@
 # Jax Agents
 
+[**Reference docs**](https://jax-agents.readthedocs.io/en/latest/)
+
 Jax agents is a reinforcement learning library based on [google/jax](https://github.com/google/jax) and [deepmind/dm-haiku](https://github.com/deepmind/dm-haiku).
 
 The goal and design philosophy of Jax Agents is to provide a simple to use library. To achieve this, all algorithms are self contained and use a consistent API.
